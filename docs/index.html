@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Skulpt Sandbox</title>
+    <title>Skulpt Turtle Sandbox</title>
     <style>
       body {
         font-family: monospace;
@@ -12,18 +12,29 @@
       }
 
       textarea {
-        width: 400px;
-        height: 300px;
+        width: 420px;
+        height: 320px;
       }
 
       #output {
-        width: 400px;
-        height: 300px;
+        width: 420px;
+        height: 140px;
         background: #111;
         color: #0f0;
         padding: 10px;
         overflow-y: auto;
         white-space: pre-wrap;
+      }
+
+      #turtle-area {
+        width: 420px;
+      }
+
+      #mycanvas {
+        width: 420px;
+        height: 320px;
+        border: 1px solid #999;
+        background: #fff;
       }
 
       button {
@@ -32,20 +43,31 @@
       }
     </style>
   </head>
+
   <body>
     <div>
       <h3>Python Code</h3>
       <textarea id="code">
-print("Hello from Skulpt!")
-for i in range(5):
-    print(i)
-    </textarea
-      >
+import turtle
+
+t = turtle.Turtle()
+t.speed(0)
+
+for i in range(36):
+    t.forward(150)
+    t.left(170)
+
+print("done")
+      </textarea>
       <br />
-      <button onclick="runPython()">Run</button>
+      <button id="runBtn">Run</button>
     </div>
 
-    <div>
+    <div id="turtle-area">
+      <h3>Turtle</h3>
+      <!-- Turtle draws into this element -->
+      <div id="mycanvas"></div>
+
       <h3>Output</h3>
       <div id="output"></div>
     </div>
@@ -56,37 +78,45 @@ for i in range(5):
 
     <script>
       function builtinRead(x) {
-        if (
-          Sk.builtinFiles === undefined ||
-          Sk.builtinFiles["files"][x] === undefined
-        ) {
-          throw "File not found: '" + x + "'";
+        if (!Sk.builtinFiles || !Sk.builtinFiles["files"][x]) {
+          throw new Error("File not found: '" + x + "'");
         }
         return Sk.builtinFiles["files"][x];
       }
 
+      function resetTurtle() {
+        // Clear turtle drawing area between runs
+        const c = document.getElementById("mycanvas");
+        c.innerHTML = "";
+      }
+
       async function runPython() {
         const output = document.getElementById("output");
-        output.textContent = ""; // clear previous output
+        output.textContent = "";
+        resetTurtle();
+
+        // Tell Skulpt Turtle where to render
+        Sk.TurtleGraphics = Sk.TurtleGraphics || {};
+        Sk.TurtleGraphics.target = "mycanvas";
 
         const code = document.getElementById("code").value;
 
         Sk.configure({
-          output: function (text) {
-            output.textContent += text;
-          },
+          output: (text) => (output.textContent += text),
           read: builtinRead,
           __future__: Sk.python3,
         });
 
         try {
-          await Sk.misceval.asyncToPromise(function () {
-            return Sk.importMainWithBody("<stdin>", false, code, true);
-          });
+          await Sk.misceval.asyncToPromise(() =>
+            Sk.importMainWithBody("<stdin>", false, code, true),
+          );
         } catch (err) {
           output.textContent += "\n" + err.toString();
         }
       }
+
+      document.getElementById("runBtn").addEventListener("click", runPython);
     </script>
   </body>
 </html>
