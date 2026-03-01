@@ -43,8 +43,21 @@
       }
     </style>
   </head>
+  <script>
+  // ---- tracer storage ----
+  window.__USED_STDLIB__ = window.__USED_STDLIB__ || new Set();
+  window.dumpUsedStdlib = () => Array.from(window.__USED_STDLIB__).sort();
+  window.clearUsedStdlib = () => window.__USED_STDLIB__.clear();
 
-  <body>
+  // ---- wrap existing builtinRead without changing it ----
+  const __originalBuiltinRead__ = window.builtinRead; // must exist after your builtinRead is defined
+  window.builtinRead = function tracedBuiltinRead(x) {
+    window.__USED_STDLIB__.add(x);
+    return __originalBuiltinRead__(x);
+  };
+</script>
+
+<h1>Development page</h1>
     <div>
       <h3>Python Code</h3>
       <textarea id="code">
