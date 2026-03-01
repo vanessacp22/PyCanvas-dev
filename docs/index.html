@@ -117,7 +117,135 @@ print("Test complete.")
       <h3>Output</h3>
       <div id="output"></div>
     </div>
+<div><textarea>import turtle
+import random
+import math
 
+print("Starting STRESS test...")
+
+# --- knobs you can tweak ---
+BURSTS = 12          # number of patterns drawn
+RAYS_MIN = 30        # rays per burst (min)
+RAYS_MAX = 90        # rays per burst (max)
+RADIUS_MIN = 80
+RADIUS_MAX = 220
+DOTS = 250           # random dot scatter count
+WALK_STEPS = 350     # random walk steps
+TRACE_OFF = True     # set False if your turtle impl needs tracing on
+# ---------------------------
+
+screen = turtle.Screen()
+screen.bgcolor("black")
+screen.title("Skulpt Turtle Stress Test")
+
+t = turtle.Turtle()
+t.speed(0)
+t.width(2)
+t.hideturtle()
+
+# If supported, this dramatically speeds turtle + reduces UI overhead
+# Some Skulpt builds may not implement tracer/update; safe to ignore if it errors.
+if TRACE_OFF:
+    try:
+        screen.tracer(0, 0)
+    except Exception as e:
+        print("tracer not available:", e)
+
+def rand_color():
+    # exercise random + floats
+    return (random.random(), random.random(), random.random())
+
+def burst(cx, cy, radius, rays):
+    t.penup()
+    t.goto(cx, cy)
+    t.pendown()
+
+    angle_step = 360.0 / rays
+
+    for i in range(rays):
+        t.color(rand_color())
+
+        # heavy-ish math: sin/cos modulation + radians conversion
+        theta = math.radians(i * angle_step)
+        mod = 1.0 + 0.35 * math.sin(theta * 3.0) + 0.15 * math.cos(theta * 7.0)
+        length = radius * mod
+
+        t.setheading(i * angle_step)
+        t.forward(length)
+        t.backward(length)
+
+def scatter_dots(n, span):
+    t.penup()
+    for i in range(n):
+        t.color(rand_color())
+        x = random.randint(-span, span)
+        y = random.randint(-span, span)
+        t.goto(x, y)
+        # dot uses underlying canvas path; good API coverage
+        try:
+            t.dot(random.randint(2, 6))
+        except Exception:
+            # fallback if dot isn't supported
+            t.pendown()
+            t.forward(1)
+            t.penup()
+
+def random_walk(steps, step_len=8):
+    t.penup()
+    t.goto(0, 0)
+    t.pendown()
+    t.color("white")
+    t.width(1)
+    for i in range(steps):
+        # random + math (use sqrt just to hit it)
+        a = random.randint(0, 359)
+        t.setheading(a)
+        jitter = math.sqrt(random.random())  # sqrt coverage
+        t.forward(step_len * (0.5 + jitter))
+        if i % 50 == 0:
+            t.color(rand_color())
+
+def update_screen():
+    try:
+        screen.update()
+    except Exception:
+        pass
+
+# 1) scatter phase
+print("Phase 1: dot scatter...")
+scatter_dots(DOTS, 260)
+update_screen()
+
+# 2) burst phase
+print("Phase 2: radial bursts...")
+for b in range(BURSTS):
+    r = random.randint(RADIUS_MIN, RADIUS_MAX)
+    rays = random.randint(RAYS_MIN, RAYS_MAX)
+
+    # random center with bias toward middle (more math)
+    x = int((random.random() - 0.5) * 420)
+    y = int((random.random() - 0.5) * 320)
+
+    burst(x, y, r, rays)
+
+    if b % 3 == 0:
+        print(f"  burst {b+1}/{BURSTS} (rays={rays}, radius={r})")
+        update_screen()
+
+update_screen()
+
+# 3) random walk phase
+print("Phase 3: random walk...")
+random_walk(WALK_STEPS)
+update_screen()
+
+print("STRESS test complete ✅")
+
+# If you want it to stay open in some environments:
+try:
+    turtle.done()
+except Exception:
+    pass</textarea></div>
     <!-- Load Skulpt -->
     <script src="runtime/skulpt.min.js"></script>
     <script src="runtime/skulpt-stdlib.js"></script>
