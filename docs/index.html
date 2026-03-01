@@ -62,15 +62,48 @@
       <h3>Python Code</h3>
       <textarea id="code">
 import turtle
+import math
+import random
+
+print("Starting integration test...")
+
+# Setup turtle
+screen = turtle.Screen()
+screen.bgcolor("black")
 
 t = turtle.Turtle()
 t.speed(0)
+t.width(2)
 
-for i in range(36):
-    t.forward(150)
-    t.left(170)
+# Function that draws a random radial burst
+def draw_burst(radius, steps):
+    angle_step = 360 / steps
+    
+    for i in range(steps):
+        t.color(random.random(), random.random(), random.random())
+        
+        # math usage (convert degrees to radians)
+        radians = math.radians(i * angle_step)
+        length = radius * (1 + 0.3 * math.sin(radians))
+        
+        t.forward(length)
+        t.backward(length)
+        t.left(angle_step)
 
-print("done")
+# Move to center
+t.penup()
+t.goto(0, 0)
+t.pendown()
+
+# Draw multiple bursts with randomness
+for i in range(5):
+    radius = random.randint(50, 150)
+    steps = random.randint(10, 40)
+    
+    draw_burst(radius, steps)
+    t.right(random.randint(10, 90))
+
+print("Test complete.")
       </textarea>
       <br />
       <button id="runBtn">Run</button>
