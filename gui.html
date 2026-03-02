@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Skulpt Turtle GUI</title>
+    <link rel="stylesheet" href="gui.css" />
+  </head>
+  <body>
+    <div class="layout">
+      <div class="editor">
+        <div id="lineNumbers"></div>
+        <textarea id="code"></textarea>
+      </div>
+
+      <div class="right-panel">
+        <div id="mycanvas"></div>
+        <div id="output"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="runBtn">Run</button>
+    </div>
+
+    <!-- Load Skulpt (BOTH files required) -->
+    <script src="./docs/runtime/skulpt.min.js"></script>
+    <script src="./docs/runtime/skulpt-stdlib.js"></script>
+
+    <script>
+      function builtinRead(x) {
+        if (!Sk.builtinFiles || !Sk.builtinFiles["files"][x]) {
+          throw new Error("File not found: '" + x + "'");
+        }
+        return Sk.builtinFiles["files"][x];
+      }
+
+      function resetTurtle() {
+        const c = document.getElementById("mycanvas");
+        c.innerHTML = "";
+      }
+
+      async function runPython() {
+        const output = document.getElementById("output");
+        output.textContent = "";
+
+        if (typeof Sk === "undefined") {
+          output.textContent =
+            "Skulpt failed to load. Check runtime script paths.";
+          return;
+        }
+
+        resetTurtle();
+
+        Sk.TurtleGraphics = Sk.TurtleGraphics || {};
+        Sk.TurtleGraphics.target = "mycanvas";
+        Sk.TurtleGraphics.width = 400;
+        Sk.TurtleGraphics.height = 400;
+
+        const code = document.getElementById("code").value;
+
+        Sk.configure({
+          output: (text) => (output.textContent += text),
+          read: builtinRead,
+          __future__: Sk.python3,
+        });
+
+        try {
+          await Sk.misceval.asyncToPromise(function () {
+            return Sk.importMainWithBody("<stdin>", false, code, true);
+          });
+        } catch (err) {
+          output.textContent += "\n" + err.toString();
+        }
+      }
+
+      document.getElementById("runBtn").addEventListener("click", runPython);
+    </script>
+  </body>
+</html>
